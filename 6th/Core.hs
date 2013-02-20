@@ -217,7 +217,7 @@ isNAry n prefix str
         [] -> True
         _  -> False
   | otherwise = False
-  where body = drop (length prefix) str
+  where body = dropPrefix prefix str
         acceptables = take n dlist `union` take n dlist'
         invalidChars = filter (\d -> notElem d acceptables) body
 

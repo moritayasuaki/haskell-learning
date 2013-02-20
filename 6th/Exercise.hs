@@ -112,3 +112,5 @@ showNum 2 = intToBin
 showNum 8 = intToOct
 showNum 10 = intToDec
 showNum 16 = intToHex
+showNum n = error $ "do not suppport " ++ n' ++ "-ary"
+                      where n' = show n
