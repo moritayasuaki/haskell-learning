@@ -2,7 +2,6 @@
 module Exercise where
 
 
-import Data.List
 import Control.Applicative
 import Control.Monad.Trans
 import Test.QuickCheck.Arbitrary
