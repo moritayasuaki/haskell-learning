@@ -140,7 +140,7 @@ integerToDhex = intToNAry 32 dhexPrefix
 nAryToInt :: Integral i => Int -> String -> String -> i
 nAryToInt n prefix str 
   | isMinus str = negate . nAryToInt n prefix . dropMinus $ str
-  | isNAry n prefix str = fromNAryList n . convert $ dropPrefix prefix str
+  | isNAry n prefix str = fromNAryList n . convert . dropPrefix prefix $ str
   where convert = mapMaybe (\d -> lookup d d2i) . reverse
 
 nAryToInt n _ _ = error $ n' ++ "-Ary digits format error"
