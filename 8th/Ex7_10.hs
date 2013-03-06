@@ -13,7 +13,7 @@ import Test.HUnit
 import qualified Data.Map as Map
 
 fmap' :: (Ord k)=>(a->b)->Map.Map k a->Map.Map k b 
-fmap' f = Map.fromAscList . map ( \(key,value) -> (key,f value) ) . Map.toAscList
+fmap' f = Map.fromAscList . map ( \(key, value) -> (key, f value) ) . Map.toAscList
 
 -- | ユニットテスト
 mapFmapTest :: Test
