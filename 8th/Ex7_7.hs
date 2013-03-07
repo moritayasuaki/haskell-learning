@@ -95,27 +95,35 @@ isBalanced' t = checkHeight t /= (-1)
 
 
 -- | 
--- 木の高さを計算せずに局所的な木構造だけを見て判断する
+-- 木の高さを計算せずに局所的な木構造だけを見て判断する方法にした
+-- QuickCheck, UnitTestレベルでは合ってそう
 
--- 子ノードをリストにして返す関数
+-- | 子ノードをリストにして返す関数
+
 children :: Tree a -> [Tree a]
 children Empty = []
 children (Node _ l r) = [l,r]
 
+
+-- |
 -- 幅優先探索用関数
 -- 条件propを満たす部分ノードを探す
 -- リスト中にある木のいずれかが条件を満たせばTrue
--- そうでない場合は子要素達を取り出してリストにして再帰する
+-- そうでない場合は子要素達を取り出して再帰する
+
 findInTrees :: (Tree a -> Bool) -> [Tree a] -> Bool
 findInTrees _ [] = False
 findInTrees prop trees 
     | any prop trees = True
     | otherwise     = findInTrees prop (concatMap children trees)
 
+
+-- |
 -- 明らかにアンバランスなパターンだとTrue
 -- それ以外はアンバランスかどうかは不明という意味でのFalse
 -- 明らかにアンバランス=一方は空、他方は孫ノードを持つ二分木
--- ひ孫の存在はDon't Care(チェックしない)
+-- 曾孫の存在はDon't Care(チェックしない)
+-- ↓こんなパターン
 --  /    /    \    \
 -- /     \    /     \
 
@@ -126,18 +134,18 @@ obviousInbalance (Node _ (Node _ (Node _ _ _) _) Empty) = True
 obviousInbalance (Node _ (Node _ _ (Node _ _ _)) Empty) = True
 obviousInbalance _ = False
 
--- 局所的な構造で平衡判断できる場合は値はBool
-
 
 -- 幅優先で木をなめて明らかにアンバランスなパターンを見つける
 -- パターンに合致するのがなければバランスしている？
--- QuickCheckレベルではバランスしている模様
+-- UnitTestとかQuickCheckのレベルではオーケーっぽい
+
 isBalanced'' :: Tree a -> Bool
 isBalanced'' tree = not (findInTrees obviousInbalance [tree])
 
 
--- lazyな木に対しては
--- 幅優先だと遅いっぽいので深さ優先でやってみる
+-- | 
+-- ほぼ同じ事を深さ優先でやってみる
+
 isBalanced''' :: Tree a -> Bool
 isBalanced''' Empty = True
 isBalanced''' (Node _ Empty Empty) = True
@@ -153,6 +161,8 @@ isBalanced''' (Node _ l r) = isBalanced''' l && isBalanced''' r
 -- |
 -- QuickCheck用宣言
 -- 50000nodeの2分木をランダム作成できるようにしとく
+-- ほぼ非平衡木しか生成されないのであんまり便利じゃないかも
+
 instance (Arbitrary a, Ord a) => Arbitrary (Tree a) where
     arbitrary = treeGenWithN 50000
 
@@ -220,19 +230,21 @@ quickStats f = do
     return stats
 
 
--- 使用例)
+-- |  ** quickStatsの使用例 **
 -- quickStats isBalanced
 -- quickStats isBalanced'
 -- こんな感じで２つの関数の実行時間を比較できる(つもり)
 
+-- |  やってみた結果
 -- Nをノードの数とすると
 -- list2TreeがO(N*log N)だと思う
--- データの作成に時間がかかるようだ
-
+-- データの作成にそれなりの時間がかかるようだ
+--
 -- isBalanced, isBalanced', isBalanced'', isBalanced'''
--- どれも慣らしでO(log N)とかそれ以下だと思う
--- 速すぎて違いが出ない
+-- ランダムな木では慣らしでO(log N)とかそれ以下だと思う
+-- ほとんど違いが出ないです。
 
+-- |
 -- コーナーケースでの処理時間計測用のデータ
 
 -- 左に伸びる木
@@ -243,16 +255,16 @@ lTree = list2Tree [0..100000]
 rTree :: Tree Int
 rTree = list2Tree [100000,99999..0]
 
-mkBTree :: Int -> Tree Int
-mkBTree 0 = Empty
-mkBTree n = Node 0 (mkBTree (n-1)) (mkBTree (n-1))
-
 -- 高さ19の平衡木
 bTree :: Tree Int
 bTree = mkBTree 19
 
+mkBTree :: Int -> Tree Int
+mkBTree 0 = Empty
+mkBTree n = Node 0 (mkBTree (n-1)) (mkBTree (n-1))
+
 -- |
--- 使用例)
+-- ** 使用例 **
 -- time isBalanced bTree
 -- time isBalanced' rTree
 -- などなど
@@ -263,14 +275,16 @@ bTree = mkBTree 19
 -- isBalanced > isBalanced' > isBalanced'' > isBalanced'''
 -- か。
 -- 後者2つはO(N)。
--- 前者はO(N log N) ~ O(N)あたり?
-
--- 右に一直線の木等は
--- isBalancedとisBalanced'は計算が終わらない。O(N*N)かな?
+-- isBalancedが O(N (log N)^2)
+-- isBalancedが O(N log N)
+-- とかかな？
+--
+-- 直線の木だと
+-- isBalancedとisBalanced'は計算が終わらない。O(N*N)かも。
 -- isBalanced''とisBalanced'''はすぐに終わる。O(1)
-
+--
 -- 一部が無限に続いている非平衡木の場合、
--- isBalanced''だけが計算終了を保証できると思われる
+-- isBalanced''だけが計算終了を保証できると思われる（試していない）
 
 
 -- | ユニットテスト
