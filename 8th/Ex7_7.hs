@@ -255,11 +255,11 @@ quickStats f = do
 
 -- 左に伸びる木
 lTree :: Tree Int
-lTree = list2Tree [0..100000]
+lTree = list2Tree [0..1000]
 
 -- 右に伸びる木
 rTree :: Tree Int
-rTree = list2Tree [100000,99999..0]
+rTree = list2Tree [1000,999..0]
 
 -- 高さ19の平衡木
 bTree :: Tree Int
@@ -289,10 +289,12 @@ mkBTree n = Node 0 (mkBTree (n-1)) (mkBTree (n-1))
 -- 
 --
 -- 直線の木だと
--- isBalancedとisBalanced'は計算が終わらない。
---      遅延されてればO(N)で済みそうだけど、
---      IntがPrimitiveなので正格評価されてO(N^2)とかになるの?
+-- isBalancedとisBalanced'はNがデカいと計算が終わらない。
+--      本来はO(N)なはずなのでlist2TreeにO(N^2)かかってるのが原因だと思う。
+--      実行時間は isBalanced' > isBalancedとなった
+--      
 -- isBalanced''とisBalanced'''は根のパターンマッチで終了する。O(1)
+--      なぜか isBalanced'' > isBalanced''' になった。理由はわからない
 --
 -- 部分木の一部が無限に続いている非平衡木の場合、
 -- isBalanced''だけが計算終了を保証できると思われる（試していない）
