@@ -19,8 +19,17 @@ module DocExample where
 --   prop> even x ==> double (x `div` 2) == x
 --   prop> odd x  ==> double (x `div` 2) == x - 1
 -- @
-double :: Int  -- ^  number as input.
-          -> Int  -- ^ result
-double a = 2*a
 
+double :: Int -> Int
+double a = 2 * a
 
+data Tree a = Empty | Node a (Tree a) (Tree a) deriving Show
+
+-- |
+-- >>> children Empty
+-- []
+-- >>> children (Node 1 (Node 2 Empty Empty) (Node 3 Empty Empty))
+-- [Node 2 Empty Empty,Node 3 Empty Empty]
+
+children Empty = []
+children (Node a left right) = [left, right]
