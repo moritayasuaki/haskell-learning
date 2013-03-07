@@ -290,11 +290,14 @@ mkBTree n = Node 0 (mkBTree (n-1)) (mkBTree (n-1))
 --
 -- 直線の木だと
 -- isBalancedとisBalanced'はNがデカいと計算が終わらない。
---      本来はO(N)なはずなのでlist2TreeにO(N^2)かかってるのが原因だと思う。
---      実行時間は isBalanced' > isBalancedとなった
+--      この関数自体は遅延されてればO(N)で済むが、
+--      list2TreeにO(N^2)かかっている模様。
+--      実行時間は isBalanced' > isBalancedとなった。
+--      パターンマッチの回数とかが原因か？
 --      
 -- isBalanced''とisBalanced'''は根のパターンマッチで終了する。O(1)
---      なぜか isBalanced'' > isBalanced''' になった。理由はわからない
+--      isBalanced'' > isBalanced''' になった。多分リスト作ったりする分の違
+--      い
 --
 -- 部分木の一部が無限に続いている非平衡木の場合、
 -- isBalanced''だけが計算終了を保証できると思われる（試していない）
