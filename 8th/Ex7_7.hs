@@ -285,15 +285,16 @@ mkBTree n = Node 0 (mkBTree (n-1)) (mkBTree (n-1))
 -- isBalanced'は2N回のパターンマッチとN回のmax,1加算
 -- isBalancedはパターンマッチが4Nとか6Nとかになる?maxとか1加算に
 --             加えてリスト作成オーバーヘッドとか？
--- 
--- 自身はない
+-- 自信はない
 -- 
 --
 -- 直線の木だと
--- isBalancedとisBalanced'は計算が終わらない。O(N)?。
--- isBalanced''とisBalanced'''はすぐに終わる。O(1)
+-- isBalancedとisBalanced'は計算が終わらない。
+--      遅延されてればO(N)で済みそうだけど、
+--      IntがPrimitiveなので正格評価されてO(N^2)とかになるの?
+-- isBalanced''とisBalanced'''は根のパターンマッチで終了する。O(1)
 --
--- 一部が無限に続いている非平衡木の場合、
+-- 部分木の一部が無限に続いている非平衡木の場合、
 -- isBalanced''だけが計算終了を保証できると思われる（試していない）
 
 
