@@ -276,8 +276,8 @@ mkBTree n = Node 0 (mkBTree (n-1)) (mkBTree (n-1))
 -- か。
 -- 後者2つはO(N)。
 -- isBalancedが O(N (log N)^2)
--- isBalancedが O(N log N)
--- とかかな？
+-- isBalanced'が O(N log N)
+-- とかかな？ちょっとよくわからない
 --
 -- 直線の木だと
 -- isBalancedとisBalanced'は計算が終わらない。O(N*N)かも。
