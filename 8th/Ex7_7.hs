@@ -2,7 +2,14 @@
 
 module Ex7_7 where
 import Test.HUnit
---import Test.QuickCheck
+import Test.QuickCheck.Arbitrary
+import Test.QuickCheck.Gen
+import Test.QuickCheck
+import Data.Time.Clock
+import Control.DeepSeq
+import System.Random
+
+
 -- | ----------------------- 木を植えよう ---------------------------
 -- | すごいHaskell 7.7 再帰的なデータ構造
 -- | Tree型の定義
@@ -87,14 +94,18 @@ isBalanced' :: Tree a -> Bool
 isBalanced' t = checkHeight t /= (-1)
 
 
--- | --------------------もっと速くなりそう-------------------
+-- | 
+-- 木の高さを計算せずに局所的な木構造だけを見て判断する
 
 -- 子ノードをリストにして返す関数
 children :: Tree a -> [Tree a]
 children Empty = []
 children (Node _ l r) = [l,r]
 
--- 幅優先探索用関数 
+-- 幅優先探索用関数
+-- 条件propを満たす部分ノードを探す
+-- リスト中にある木のいずれかが条件を満たせばTrue
+-- そうでない場合は子要素達を取り出してリストにして再帰する
 findInTrees :: (Tree a -> Bool) -> [Tree a] -> Bool
 findInTrees _ [] = False
 findInTrees prop trees 
@@ -115,45 +126,151 @@ obviousInbalance (Node _ (Node _ (Node _ _ _) _) Empty) = True
 obviousInbalance (Node _ (Node _ _ (Node _ _ _)) Empty) = True
 obviousInbalance _ = False
 
+-- 局所的な構造で平衡判断できる場合は値はBool
+
+
 -- 幅優先で木をなめて明らかにアンバランスなパターンを見つける
 -- パターンに合致するのがなければバランスしている？
 -- QuickCheckレベルではバランスしている模様
 isBalanced'' :: Tree a -> Bool
-isBalanced'' tree = (findInTrees obviousInbalance [tree])
+isBalanced'' tree = not (findInTrees obviousInbalance [tree])
 
+
+-- lazyな木に対しては
+-- 幅優先だと遅いっぽいので深さ優先でやってみる
+isBalanced''' :: Tree a -> Bool
+isBalanced''' Empty = True
+isBalanced''' (Node _ Empty Empty) = True
+isBalanced''' (Node _ Empty (Node _ Empty Empty)) = True
+isBalanced''' (Node _ (Node _ Empty Empty) Empty) = True
+isBalanced''' (Node _ Empty (Node _ _ (Node _ _ _))) = False
+isBalanced''' (Node _ Empty (Node _ (Node _ _ _) _)) = False
+isBalanced''' (Node _ (Node _ (Node _ _ _) _) Empty) = False
+isBalanced''' (Node _ (Node _ _ (Node _ _ _)) Empty) = False
+isBalanced''' (Node _ l r) = isBalanced''' l && isBalanced''' r
+
+
+-- |
+-- QuickCheck用宣言
+-- 50000nodeの2分木をランダム作成できるようにしとく
+instance (Arbitrary a, Ord a) => Arbitrary (Tree a) where
+    arbitrary = treeGenWithN 50000
+
+
+treeGenWithN :: (Arbitrary a, Ord a) => Int -> Gen(Tree a)
+treeGenWithN n = do
+    ls <- vector n
+    return (list2Tree ls)
 
 -- | 性質テスト
-prop_isBalanced' :: [Int] -> Bool
-prop_isBalanced' ls =
+prop_isBalanced' :: Tree Int -> Bool
+prop_isBalanced' tree = 
     isBalanced' tree == isBalanced tree
-    where tree = list2Tree ls
 
-prop_isBalanced'' :: [Int] -> Bool
-prop_isBalanced'' ls =
+prop_isBalanced'' :: Tree Int -> Bool
+prop_isBalanced'' tree =
     isBalanced'' tree == isBalanced tree
-    where tree = list2Tree ls
+
+prop_isBalanced''' :: Tree Int -> Bool
+prop_isBalanced''' tree =
+    isBalanced''' tree == isBalanced tree
 
 -- | 性能テスト
--- 性質としては絶対満たされるf x = f x の形でQuickCheckに渡し
--- 様々なxに対するfの性能を計測することにした
--- でもちゃんと計測するの難しい。
--- QuickCheckにもっと長いリストを生成してもらわないと。
+-- ランダムに生成した引数データを20個渡して
+-- 20回のそれぞれの時間を計測する
+-- 正格評価とか遅延評価とかがあるため
+-- 本当に計測したい部分がどこなのかよくわからん
+-- (引数データ生成自体が遅延されてたりするので)
 
-stats_isBalanced :: [Int] -> Bool
-stats_isBalanced ls =
-    isBalanced tree == isBalanced tree
-    where tree = list2Tree ls
+-- deepseq用宣言
+instance NFData a => NFData (Tree a) where
+    rnf Empty = ()
+    rnf (Node a l r) = rnf a `seq` rnf l `seq` rnf r
 
-stats_isBalanced' :: [Int] -> Bool
-stats_isBalanced' ls =
-    isBalanced' tree == isBalanced' tree
-    where tree = list2Tree ls
+-- 計算時間計測関数
+time :: (NFData b) => (a -> b) -> a -> IO NominalDiffTime
+time f x = do
+    t1 <- getCurrentTime
+    -- 強制評価。
+    -- これやんないとf xが無駄な計算とみなされてしまう
+    _ <- return $!! (f x) 
+    t2 <- getCurrentTime
+    return (diffUTCTime t2 t1)
 
-stats_isBalanced'' :: [Int] -> Bool
-stats_isBalanced'' ls =
-    isBalanced'' tree == isBalanced'' tree
-    where tree = list2Tree ls
 
+-- strictな（全部評価済みの）データに対する実行時間
+quickStats' :: (NFData a, NFData b, Arbitrary a) => (a -> b) -> IO [NominalDiffTime]
+quickStats' f = do
+    rnd <- newStdGen
+    let g = unGen (vectorOf 20 arbitrary)
+    let x = force $ g rnd 5 -- 引数xを全部評価済みにしておく
+    stats <- sequence $ time f `map` x
+    return stats
+
+-- lazyな（必要でない部分は評価されていない）データに対する実行時間
+-- 計測対象の関数がなめるデータに対して、
+-- そのデータを生成する関数の実行時間も含める感じになる
+
+quickStats :: (Arbitrary a, NFData b) => (a -> b) -> IO [NominalDiffTime]
+quickStats f = do
+    rnd <- newStdGen
+    let g = unGen (vectorOf 20 arbitrary)
+    let x = g rnd 5
+    stats <- sequence $ time f `map` x
+    return stats
+
+
+-- 使用例)
+-- quickStats isBalanced
+-- quickStats isBalanced'
+-- こんな感じで２つの関数の実行時間を比較できる(つもり)
+
+-- Nをノードの数とすると
+-- list2TreeがO(N*log N)だと思う
+-- データの作成に時間がかかるようだ
+
+-- isBalanced, isBalanced', isBalanced'', isBalanced'''
+-- どれも慣らしでO(log N)とかそれ以下だと思う
+-- 速すぎて違いが出ない
+
+-- コーナーケースでの処理時間計測用のデータ
+
+-- 左に伸びる木
+lTree :: Tree Int
+lTree = list2Tree [0..100000]
+
+-- 右に伸びる木
+rTree :: Tree Int
+rTree = list2Tree [100000,99999..0]
+
+mkBTree :: Int -> Tree Int
+mkBTree 0 = Empty
+mkBTree n = Node 0 (mkBTree (n-1)) (mkBTree (n-1))
+
+-- 高さ19の平衡木
+bTree :: Tree Int
+bTree = mkBTree 19
+
+-- |
+-- 使用例)
+-- time isBalanced bTree
+-- time isBalanced' rTree
+-- などなど
+
+-- |
+-- 平衡木だと結果は結構変わる
+-- 実行時間は
+-- isBalanced > isBalanced' > isBalanced'' > isBalanced'''
+-- か。
+-- 後者2つはO(N)。
+-- 前者はO(N log N) ~ O(N)あたり?
+
+-- 右に一直線の木等は
+-- isBalancedとisBalanced'は計算が終わらない。O(N*N)かな?
+-- isBalanced''とisBalanced'''はすぐに終わる。O(1)
+
+-- 一部が無限に続いている非平衡木の場合、
+-- isBalanced''だけが計算終了を保証できると思われる
 
 
 -- | ユニットテスト
@@ -199,7 +316,14 @@ balanceTest = test [
 -- | main
 main :: IO ()
 main = do
-       _ <- runTestTT balanceTest
-       return ()
+      _ <- runTestTT balanceTest
+      return ()
+
+quickChecks :: IO ()
+quickChecks = do
+      _ <- quickCheck prop_isBalanced'
+      _ <- quickCheck prop_isBalanced''
+      _ <- quickCheck prop_isBalanced'''
+      return ()
 
 
