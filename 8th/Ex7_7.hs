@@ -212,7 +212,7 @@ time f x = do
 quickStats' :: (NFData a, NFData b, Arbitrary a) => (a -> b) -> IO [NominalDiffTime]
 quickStats' f = do
     rnd <- newStdGen
-    let g = unGen (vectorOf 20 arbitrary)
+    let g = unGen (vectorOf 30 arbitrary)
     let x = force $ g rnd 5 -- 引数xを全部評価済みにしておく
     stats <- sequence $ time f `map` x
     return stats
@@ -224,7 +224,7 @@ quickStats' f = do
 quickStats :: (Arbitrary a, NFData b) => (a -> b) -> IO [NominalDiffTime]
 quickStats f = do
     rnd <- newStdGen
-    let g = unGen (vectorOf 20 arbitrary)
+    let g = unGen (vectorOf 30 arbitrary)
     let x = g rnd 5
     stats <- sequence $ time f `map` x
     return stats
@@ -237,12 +237,18 @@ quickStats f = do
 
 -- |  やってみた結果
 -- Nをノードの数とすると
--- list2TreeがO(N*log N)だと思う
+-- list2Treeが慣らしでO(N log N)だと思う
 -- データの作成にそれなりの時間がかかるようだ
 --
 -- isBalanced, isBalanced', isBalanced'', isBalanced'''
 -- ランダムな木では慣らしでO(log N)とかそれ以下だと思う
--- ほとんど違いが出ないです。
+-- 速すぎてあまり違いがわからん。
+-- 実行時間的には
+-- isBalanced'' = isBalanced' > isBalanced > isBalanced'''
+-- という感じ
+-- 計算量のオーダーというより
+-- データアクセスとか値コンストラクタとかのオーバーヘッドの違いだと思う
+
 
 -- |
 -- コーナーケースでの処理時間計測用のデータ
@@ -274,13 +280,17 @@ mkBTree n = Node 0 (mkBTree (n-1)) (mkBTree (n-1))
 -- 実行時間は
 -- isBalanced > isBalanced' > isBalanced'' > isBalanced'''
 -- か。
--- 後者2つはO(N)。
--- isBalancedが O(N (log N)^2)
--- isBalanced'が O(N log N)
--- とかかな？ちょっとよくわからない
+-- isBalanced'''はN回のパターンマッチ
+-- isBalanced''は上に加えてリスト作成・連結のオーバーヘッド
+-- isBalanced'は2N回のパターンマッチとN回のmax,1加算
+-- isBalancedはパターンマッチが4Nとか6Nとかになる?maxとか1加算に
+--             加えてリスト作成オーバーヘッドとか？
+-- 
+-- 自身はない
+-- 
 --
 -- 直線の木だと
--- isBalancedとisBalanced'は計算が終わらない。O(N*N)かも。
+-- isBalancedとisBalanced'は計算が終わらない。O(N)?。
 -- isBalanced''とisBalanced'''はすぐに終わる。O(1)
 --
 -- 一部が無限に続いている非平衡木の場合、
