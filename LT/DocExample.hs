@@ -1,25 +1,28 @@
 {- |
 Module :   DocExample
 Description :   doctest-haddock-example
-Copyright :   (c) Morita Yasuaki
+Copyright :   Morita Yasuaki
 License :   BSD liscense
 -}
 
 module DocExample where
 
 -- |
--- doubleのテストケースだよ
+-- Unit Test for `double`
+--
 -- >>> double 4
 -- 8
 
 double :: Int -> Int
-double a = 2*a
+double a = 2 * a
 
 -- ^
--- doubleの他の利用例
+-- Other Usage of `double`
+--
 -- >>> double 12
 -- 24
 --
--- double関数の性質
+-- Property of `double`
+--
 -- prop> double x `div` 2 == x
 

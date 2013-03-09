@@ -6,7 +6,7 @@ haddock,doctest導入
 #### Feb 20, 2013
 
 テストやドキュメンテーションに
-**doctest**が便利なので紹介します。
+**doctest** が便利なので紹介します。
 
 cabal、doctestのインストール設定等
 ---------------------------------
@@ -69,7 +69,7 @@ $ cabal update
 新しく入れた方のcabalのパッケージ情報を最新にしておきます。
 
 
-あと、cabal初回起動時に**$HOME/.cabal/config**というファイルが作られるのですが、
+あと、cabal初回起動時に **$HOME/.cabal/config** というファイルが作られるのですが、
 自分好みに中身を書き換えた方がいいかも知れません。
 僕はなんとなくdocumentation=Trueにしています。
 (ドキュメント付きでパッケージインストールするの意味)
@@ -124,7 +124,7 @@ doctestとhaddock の使い方
 {- |
 Module :   DocExample
 Description :   doctest-haddock-example
-Copyright :   (c) Morita Yasuaki
+Copyright :   Morita Yasuaki
 License :   BSD liscense
 -}
 
@@ -156,8 +156,10 @@ $ doctest DocExample.hs
 ```
 
 とやるとテストケースの実行ができます。
-> 結果
+以下のような結果が出てくれば成功です。
+
 ```
+Example: 2  Tried: 2  Errors: 0  Failures: 0
 ```
 
 doctestについてはこれで終わりです。
