@@ -25,19 +25,21 @@ cabalはghc向けのパッケージ管理ソフトです。
 haskell-platformは入ってるとして、
 
 ```bash
+$ cabal update
 $ cabal install cabal-install
 ```
 
 とshellに打ちましょう。
 
-cabalにcabal-installをinstallさせるという意味不明な状態ですが、
-haskell-platformに元から入ってるcabalで新しめのcabalをインストールするという意味です。  
-なのでPCにはcabalが二つ入ります。  
+cabalにcabal-installをinstallさせるという変なコマンドですが、  
+haskell-platformに元から入ってるcabalで新しめのcabalをインストールするという意味になります。  
+なのでPCにはcabalが二つ入ります。
+
 cabal-devというプロジェクト毎に
 パッケージを管理するやつもあるので好みで使ってください。
 
-自分の場合、時間もかかるし、容量も食うので、cabalでどっからでも使えるようにしちゃってます。  
-(地雷っぽいパッケージはcabal-devで入れます)
+自分の場合、時間もかかるし容量も食うので、基本はcabalでどっからでも使えるようにし、  
+地雷っぽいパッケージだけcabal-devで入れてます。
 
 インストールが終わったら
 
@@ -45,10 +47,10 @@ cabal-devというプロジェクト毎に
 $ which cabal
 ```
 
-
-でcabalの所在地を調べましょう。  
-もしホームディレクトリ以下($HOME/.cabal/bin/cabal)
-でなければ、古いcabalが使われているままです。  
+でcabalの所在地を調べてみてください。  
+もしホームディレクトリ以下($HOME/.cabal/bin/cabal)でなく、  
+haskell-platformディレクトリ以下だと
+古いcabalが使われているままになっていると思います。  
 PATHをゴニョゴニョして、新しいcabalが優先して使われるようにしておきます。
 
 ```bash
@@ -57,19 +59,20 @@ $ export PATH=$HOME/.cabal/bin:$PATH
 
 
 で、早速doctestをインストール。。。する前に、  
-一応
+もう一回
 
 ```bash
 $ cabal update
 ```
 
-でパッケージ情報を最新にしておきます。
+して、
+新しく入れた方のcabalのパッケージ情報を最新にしておきます。
 
 
 あと、cabal初回起動時に**$HOME/.cabal/config**というファイルが作られるのですが、
 自分好みに中身を書き換えた方がいいかも知れません。
 僕はなんとなくdocumentation=Trueにしています。
-(デフォルトドでキュメント付きでパッケージインストールするの意味)
+(ドキュメント付きでパッケージインストールするの意味)
 
 ```bash
 $ cabal install haddock doctest doctest-prop
@@ -189,11 +192,6 @@ haddockはオプションが非常に多く、
 
 僕は脅威のVimテクノロジの一つ、QuickRunプラグインを使い、  
 Vim上で2キーストロークでdoctestが走るようにしています。  
-こうしておくだけで
-実装とテストを行き来するのが
-非常に楽になりますよ。  
-
-Vim以外のエディタを使ってる方でもdoctestを起動するショートカットを入れておくといいと思いますよ。
 
 > ~/.vimrc
 
@@ -206,4 +204,5 @@ let g:quickrun_config['haskell'] = {
 nnoremap <sirent> <leader>r :QuickRun<CR>
 ```
 
-
+Vim以外のエディタを使ってる方でもdoctestを起動するショートカットを入れておくとよいと思います。  
+実装とテストを行き来するのが非常に楽になると思います。
