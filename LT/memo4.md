@@ -158,8 +158,10 @@ $ doctest DocExample.hs
 とやるとテストケースの実行ができます。
 以下のような結果が出てくれば成功です。
 
+> doctest実行結果
+
 ```
-Example: 2  Tried: 2  Errors: 0  Failures: 0
+Example: 3  Tried: 3  Errors: 0  Failures: 0
 ```
 
 doctestについてはこれで終わりです。
