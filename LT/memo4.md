@@ -53,8 +53,10 @@ haskell-platformディレクトリ以下だと
 古いcabalが使われているままになっていると思います。  
 PATHをゴニョゴニョして、新しいcabalが優先して使われるようにしておきます。
 
+> ~/.bashrc
+
 ```bash
-$ export PATH=$HOME/.cabal/bin:$PATH
+export PATH=$HOME/.cabal/bin:$PATH
 ```
 
 
@@ -65,14 +67,19 @@ $ export PATH=$HOME/.cabal/bin:$PATH
 $ cabal update
 ```
 
-して、
-新しく入れた方のcabalのパッケージ情報を最新にしておきます。
+して、新しく入れた方のcabalのパッケージ情報を最新にしておきます。
 
 
 あと、cabal初回起動時に **$HOME/.cabal/config** というファイルが作られるのですが、
 自分好みに中身を書き換えた方がいいかも知れません。
 僕はなんとなくdocumentation=Trueにしています。
 (ドキュメント付きでパッケージインストールするの意味)
+
+はい！ここでやっとcabal関係がなんとかなりました。
+疲れる！お疲れ様でした！
+
+
+あとは使いたいパッケージを入れるだけです。
 
 ```bash
 $ cabal install haddock doctest doctest-prop
@@ -87,7 +94,7 @@ cabalで何も考えずにインストールしたパッケージは、
 さっきPATHを通した$HOME/.cabal/binに配置されるので
 すぐ使えると思います。
 
-開発環境整える系では
+開発環境整える系のパッケージだと、
 
 + ghc-mod
 + HLint
@@ -95,6 +102,7 @@ cabalで何も考えずにインストールしたパッケージは、
 あたりを追加で入れとくといいかも知れません。
 僕はlintはあんまり使ってないですが、
 ghc-modにはお世話になっています。
+
 
 doctestとhaddock の使い方
 -------------------------
@@ -115,7 +123,10 @@ doctestとhaddock の使い方
 `>>>`の方はghciで実行した結果と文字列比較するだけのものなので
 例外もテストできます。
 
-ドキュメントとテストケース書き方はだいたいこんな感じで、
+`prop>`という記述でテストが走るようにするには
+doctest-propというパッケージを入れておく必要があると思います。
+
+ドキュメントとテストケースの書き方はだいたいこんな感じで、
 見てもらえば分かると思います。
 
 > DocExample.hs
@@ -136,7 +147,7 @@ module DocExample where
 -- 8
 
 double :: Int -> Int
-double a = 2*a
+double a = 2 * a
 
 -- ^
 -- doubleの他の利用例
@@ -150,6 +161,7 @@ double a = 2*a
 ```
 
 テストしたい時はdoctestコマンドを使います。
+単純に
 
 ```bash
 $ doctest DocExample.hs
@@ -171,7 +183,7 @@ doctestについてはこれで終わりです。
 次はドキュメントの生成ですが
 
 ```bash
-$ haddock --html *.hs -o doc
+$ haddock --html DocExample.hs -o doc
 ```
 
 でdoc以下にドキュメントが生成されます。
@@ -179,6 +191,9 @@ haddockはオプションが非常に多く、
 全部は把握していません。
 いろいろ実験してみるとおもしろいかも。
 
+また、haddockがサポートしているのは`>>>`のユニットテストだけで、
+`prop>`の性質テストはサポートしていないようです。
+日本語は上手く出力されないようです。
 
 感想
 ----
@@ -193,9 +208,8 @@ haddockはオプションが非常に多く、
 さらにhaddockでドキュメンテーションもできるというおまけ付きです。  
 (ただ日本語は消されます。悲しい。)
 
-
-僕は脅威のVimテクノロジの一つ、QuickRunプラグインを使い、  
-Vim上で2キーストロークでdoctestが走るようにしています。  
+僕は脅威のVimテクノロジの一つ、QuickiRunプラグインを使い、  
+2キーストロークでdoctestが走るようにしています。  
 
 > ~/.vimrc
 
