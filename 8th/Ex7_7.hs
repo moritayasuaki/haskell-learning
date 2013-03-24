@@ -166,6 +166,10 @@ isBalanced''' (Node _ l r) = isBalanced''' l && isBalanced''' r
 instance (Arbitrary a, Ord a) => Arbitrary (Tree a) where
     arbitrary = treeGenWithN 50000
 
+for :: Int -> [(String,Int)]
+for n = MkResult [("hello",n)]
+-- |
+-- prop> for x
 
 treeGenWithN :: (Arbitrary a, Ord a) => Int -> Gen(Tree a)
 treeGenWithN n = do
@@ -255,19 +259,32 @@ quickStats f = do
 
 -- 左に伸びる木
 lTree :: Tree Int
-lTree = list2Tree [0..1000]
+lTree = mkLTree 50000
 
 -- 右に伸びる木
 rTree :: Tree Int
-rTree = list2Tree [1000,999..0]
+rTree = mkRTree 50000
 
 -- 高さ19の平衡木
 bTree :: Tree Int
 bTree = mkBTree 19
 
+-- 部分的に無限な木
+infTree :: Tree Int
+infTree = Node 0 infTree (mkLTree 3)
+
 mkBTree :: Int -> Tree Int
 mkBTree 0 = Empty
-mkBTree n = Node 0 (mkBTree (n-1)) (mkBTree (n-1))
+mkBTree n = Node n (mkBTree (n-1)) (mkBTree (n-1))
+
+mkLTree :: Int -> Tree Int
+mkLTree 0 = Empty
+mkLTree n = Node n (mkLTree (n-1)) Empty
+
+mkRTree :: Int -> Tree Int
+mkRTree 0 = Empty
+mkRTree n = Node n Empty (mkRTree (n-1))
+
 
 -- |
 -- ** 使用例 **
@@ -276,7 +293,8 @@ mkBTree n = Node 0 (mkBTree (n-1)) (mkBTree (n-1))
 -- などなど
 
 -- |
--- 平衡木だと結果は結構変わる
+-- 平衡木の場合
+-- ===========
 -- 実行時間は
 -- isBalanced > isBalanced' > isBalanced'' > isBalanced'''
 -- か。
@@ -285,23 +303,25 @@ mkBTree n = Node 0 (mkBTree (n-1)) (mkBTree (n-1))
 -- isBalanced'は2N回のパターンマッチとN回のmax,1加算
 -- isBalancedはパターンマッチが4Nとか6Nとかになる?maxとか1加算に
 --             加えてリスト作成オーバーヘッドとか？
---    実測上は 100 : 20 : 10 : 3 ぐらいの比
+-- 実測上は 100 : 20 : 10 : 3 ぐらいの比
 -- 
 --
--- 直線の木だと
--- isBalancedとisBalanced'はNがデカいと計算が終わらない。
---      この関数自体は遅延されてればO(N)で済むが、
---      list2TreeにO(N^2)かかっている模様。
+-- 直線状の木の場合
+-- ================
+-- list2Treeでこの木をつくると
+-- O(N^2)かかってしまうので生成関数を別に用意した
+-- isBalancedとisBalanced'はO(N)
 --      実行時間は isBalanced' > isBalancedとなった。
 --      パターンマッチの回数とかが原因か？
 --      
--- isBalanced''とisBalanced'''は根のパターンマッチで終了する。O(1)
---      isBalanced'' > isBalanced''' になった。多分リスト作ったりする分の違
---      い
+-- isBalanced''とisBalanced'''は根のパターンマッチ一回で終了する。O(1)
+--      isBalanced'' > isBalanced''' になった。
+--      多分リスト作ったりする分の違い
 --
--- 部分木の一部が無限に続いている非平衡木の場合、
--- isBalanced''だけが計算終了を保証できると思われる（試していない）
-
+-- 部分木の一部が無限に続いているような非平衡木の場合、
+-- isBalanced''だけが計算終了を保証できる（試していない）
+-- と思ったが試したら駄目なパターンがあった。
+-- 他のやり方でできるとは思うが
 
 -- | ユニットテスト
 balanceTest :: Test
