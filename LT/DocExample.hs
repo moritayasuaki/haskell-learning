@@ -16,11 +16,15 @@ module DocExample where
 double :: Int -> Int
 double a = 2 * a
 
+-- |
+-- >>> double 5.0
+-- 10
+
 -- ^
 -- Other Usage of `double`
 --
--- >>> double 12
--- 24
+-- >>> 1 `div` 0
+-- *** Exception: divide by zero
 --
 -- Property of `double`
 --
