@@ -1,7 +1,6 @@
 module Main where
 
 import System.Random
-import System.Time
 import Text.Printf
 
 main :: IO ()
@@ -13,8 +12,7 @@ main = do
 mkSecret :: IO String
 mkSecret = do
     gen <- newStdGen
-    let randChars = randomRs ('0','9') gen
-    return $ take 4 randChars
+    return . take 4 $ randomRs ('0', '9') gen
 
 game :: String -> IO ()
 game secret = do
@@ -23,7 +21,7 @@ game secret = do
     case check secret input of
         InputError -> putStrLn "Please input 4 digits." >> game secret
         Incorrect (a,b) -> putStrLn (printf "%d %d" a b) >> game secret
-        Correct -> putStrLn "Correct!!"
+        Correct -> putStrLn "Correct!"
 
 data Result = InputError
             | Incorrect (Int,Int)
@@ -52,8 +50,7 @@ check secret input
     | length input /= 4 || any (`notElem` ['0'..'9']) input
       = InputError
     | secret == input = Correct
-    | otherwise = Incorrect (numOfMatched, numOfExists)
-    where numOfMatched = 
-            length . filter (== True) $ zipWith (==) secret input
-          numOfExists = 
-            length . filter (== True) $ map (`elem` input) secret
+    | otherwise = Incorrect (numMatched, numExists)
+    where numMatched = numTrue $ zipWith (==) secret input
+          numExists = numTrue $ map (`elem` input) secret
+          numTrue = length . filter (== True)
