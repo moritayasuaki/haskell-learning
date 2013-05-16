@@ -6,9 +6,13 @@ import Text.Parsec(eof,char,(<?>),(<|>),many1,digit,parse,chainl1,chainr1,spaces
 import Control.Applicative((*>),(<*),(<$>),(<*>),(<**>),pure,empty)
 import Control.Monad((<=<),(=<<),(>>=),(>>),(>>=),ap)
 
+-- Data structure of Arithmetic Expression
+
 data Expr = Atom Int
           | Op Char Expr Expr deriving (Show,Read)
 
+
+-- Parser combinators
 
 token :: Parser a -> Parser a
 token p = spaces *> p <* spaces
@@ -18,7 +22,6 @@ parens p = token ( char '(' ) *> p <* token ( char ')' )
 
 op :: Char -> Parser (Expr -> Expr -> Expr)
 op c = token (Op <$> char c)
-
 
 pInfixExpr :: Parser Expr
 pInfixExpr = pInfixTerm `chainl1` pAdd
@@ -54,8 +57,6 @@ pAtom = token (Atom <$> read <$> many1 digit)
 -- >>> infixNToRpn "10 - ( 4 + 3 ) * 2"
 -- "10 4 3 + 2 * -"
 
-
-
 infixNToRpn :: String -> String
 infixNToRpn str = case parse pInfixExpr "infix arith" str of
                     Right expr -> showRpn expr
@@ -78,6 +79,9 @@ rpnToInfixN :: String -> String
 rpnToInfixN str = showInfix . readRpn $ str
 
 
+-- I don't like implementation of readRpn.
+-- but it works.
+
 readRpn :: String -> Expr
 readRpn str = ll1 [] ls
     where ls = words str
@@ -93,7 +97,8 @@ readRpn str = ll1 [] ls
           ll1 [a] [] = a
 
 -- pRpnExpr doesn't work.
--- I couldn't understand this behavior.
+-- Something may be wrong,
+-- but I don't get it. :(
 
 pRpnExpr :: Parser Expr
 pRpnExpr = 
@@ -113,6 +118,10 @@ pRpnCalc =
 pRpnOp :: Parser (Expr -> Expr -> Expr)
 pRpnOp = pMul <|> pAdd
 
+
+-- My `show` functions.
+-- I create two ways to show `Expr` data structure
+
 showRpn :: Expr -> String
 showRpn (Atom n) = printf "%d" n
 showRpn (Op o l r) = printf "%s %s %c" (showRpn l) (showRpn r) o
@@ -130,6 +139,4 @@ showInfixWithRank n (Op '-' l r) = withParens (n > 0) $ printf "%s %c %s" (showI
 withParens :: Bool -> String -> String
 withParens True str = "( " ++ str ++ " )"
 withParens False str = str
-
-
 

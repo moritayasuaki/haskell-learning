@@ -12,21 +12,27 @@ main = do
     byteData <- BS.readFile filename
     let words = BS.unpack byteData
     let dist = distOccur words
+    putStrLn "-- Top Ten of Large Probabilities"
     print . take 10 . reverse . sort $ dist -- 出現確率がでかいのを表示
+
+    putStrLn "-- Distribution --"
     print dist -- 単純に分布を表示
+ 
+    putStrLn "-- Mean Entropy --"
     let me = meanEntropy $ dist
     print me -- 平均情報量
+
+    putStrLn "-- Entropy * Data Length --"
     print $ me * fromIntegral (length words) -- 平均情報量 * データ長さ
 
 -- |
 -- countOccur [0x00,0x01,0xff]
-type Dict = [(Word8,Int)]
 countOccur :: [Word8] -> [Int]
 countOccur ws = map (\x -> count x ws) symbols
     where count w = length . filter (w==)
           symbols = [0x00 .. 0xFF]
 -- |
--- >>> distOccur [0x00,0x00,0x00,0x00,0x01,0x01,0xff,0xff]
+-- distOccur [0x00,0x00,0x00,0x00,0x01,0x01,0xff,0xff]
 
 
 distOccur :: [Word8] -> [Double]
