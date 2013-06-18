@@ -34,7 +34,7 @@ Recursive Decent Parsing &mdash; 再帰下降構文解析
 `html`
 
 ```html
-<ul contenteditable=true>
+<ul>
   <li> Language
     <ul>
       <li> English </li>
