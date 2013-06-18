@@ -2,10 +2,27 @@ module Plist where
 
 import Data.List
 
+data Contents = S String | T ListTag deriving Show
+data ListTag = UL [Contents] | OL [Contents] deriving Show
+
+-- |
+-- >>> listHeader "<ul><li>thanks</li></ul>" 
+
+listHeader = (string "<ul>" *> ((T . UL) <$> listBody) <* string "</ul>")
+          <|> (string "<ol>" *> ((T . OL) <$> listBody) <* string "</ol>")
+
+listBody = many (string "<li>" *> listContents <* string "</li>")
+
+listContents = (S <$> rawString) 
+            <|> listHeader 
+
+rawString = many . choice $ map char (['a'..'z'] ++ ['A'..'Z'])
+
+
 type Source = String
 type ErrorMessage = String
 
-type Parser a = Source -> Either ErrorMessage (a, Source)
+type Parser output = Source -> Either ErrorMessage (output, Source)
 
 -- |
 -- >>> char 'p' "p"
@@ -47,18 +64,10 @@ pa <* pb = \src -> case pa src of
         Left e -> Left e
         Right (ans2, s) -> Right (ans, s)
 
-
-
 (<|>) :: Parser a -> Parser a -> Parser a
 pa <|> pa' = \src -> case pa src of
     Left e -> pa' src
     Right _ -> pa src
-
--- |
--- >>> (string "abs" <|> string "abd") "abd"
-
--- |
--- >>> many (string "abs") "absabs"
 
 many :: Parser a -> Parser [a]
 many p = (:) <$> p <*> many p <|> success
@@ -66,21 +75,11 @@ many p = (:) <$> p <*> many p <|> success
 success :: Parser [a]
 success = \src -> Right ([],src)
 
-anyChar :: Parser Char
-anyChar c:cs = Right (c,cs)
+choice :: [Parser a] -> Parser a
+choice ps = foldr1 (<|>) ps
 
-data Contents = S String | T ListTag deriving Show
-data ListTag = UL [Contents] | OL [Contents] deriving Show
+spaces :: Parser String
+spaces = many (char ' ' <|> char '\t' <|> char '\r' <|> char '\n')
 
-listHeader = (string "<ul>" *> ((T . UL) <$> listBody) <* string "</ul>")
-          <|> (string "<ol>" *> ((T . OL) <$> listBody) <* string "</ol>")
 
-listBody = many (string "<li>" *> listContents <* string "</li>")
 
-listContents = (S <$> rawString) 
-            <|> listHeader 
-
-rawString = string "hoge"
-
--- |
--- >>> listHeader "<ul><li>hoge</li></ul>" 
