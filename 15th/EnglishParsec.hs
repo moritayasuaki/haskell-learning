@@ -7,9 +7,18 @@ import Text.Parsec.String(Parser)
 import Control.Applicative hiding ((<|>),many)
 import System.IO.UTF8 as U8
 
+-- |
+-- S : Sentence 文
+-- NP : Noun Phrase 主部
+-- VP : Verb Phrase 述部
 data S = S NP VP deriving Show
-pS :: Parser S pS = S <$> pNP <*> pVP
+pS :: Parser S 
+pS = S <$> pNP <*> pVP
 
+-- |
+-- Vi : 自動詞
+-- Vt : 他動詞
+-- Vs : 関係代名詞を取る他動詞
 data VP = Vi String
         | Vt String NP 
         | Vs String DS
@@ -18,8 +27,11 @@ data VP = Vi String
 pVP :: Parser VP
 pVP  =  (Vi <$> pVi)
     <|> (Vt <$> pVt <*> pNP)
-    <|> (Vs <$> pVs <*> pDS)
+    <|> (Vs <$> pVs <*> pDS) 
 
+-- |
+-- Pronoun : 代名詞
+-- DN : 名詞
 data NP = NP (Maybe String) DN
         | Pronoun String
         deriving Show
@@ -28,26 +40,36 @@ pNP  =  (Pronoun <$> pNpn)
     <|> (NP <$> optionMaybe (try pDet) <*> pDN)
 
 
+-- |
+-- PP : Preposition Phrase 前置詞句
 data PP = PP String NP
         deriving Show
 pPP :: Parser PP
 pPP  = PP <$> pP <*> pNP
 
+-- |
+-- AP : Adjective Phrase 形容詞句
 data AP = AP AdvP String
         deriving Show
 pAP :: Parser AP
 pAP = AP <$> pAdvP <*> pA
 
+-- |
+-- DS : Sentence  関係代名詞によって節になる
 data DS = DS (Maybe String) S
         deriving Show
 pDS :: Parser DS
 pDS = DS <$> optionMaybe pRel <*> pS
 
+-- |
+-- DN : 形容詞付きの名詞句
 data DN = DN [AP] String [PP]
         deriving Show
 pDN :: Parser DN
 pDN = DN <$> many (try pAP) <*> pN <*> many (try pPP)
 
+-- |
+-- AdvP : Adverb Phrase 副詞
 data AdvP = AdvP [String]
           deriving Show
 pAdvP = AdvP <$> many (try pAdv)
@@ -98,7 +120,7 @@ dp = zip ["of","at","to","for","until","via","in","after","above","about"]
          ["の","にて","へ","のために","まで","を通して","の中で","の後で","の上の","について"]
 
 -- |
--- >>> let text = "she love the old man "
+-- >>> let text = "she think they hate the old man "
 -- >>> let Right test = parse (pS <* eof) "source" text
 -- >>> let Just jtest = toJapanese test 
 -- >>> Prelude.putStrLn jtest
