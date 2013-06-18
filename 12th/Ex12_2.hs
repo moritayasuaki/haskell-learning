@@ -2,15 +2,14 @@ module Ex12_2 where
 
 import Text.Printf
 import Text.Parsec.String(Parser)
-import Text.Parsec(eof,char,(<?>),(<|>),many1,digit,parse,chainl1,chainr1,spaces,parseTest,string)
+import Text.Parsec(eof,char,(<?>),(<|>),many1,digit,parse,chainl1,chainr1,spaces,parseTest,string,try)
 import Control.Applicative((*>),(<*),(<$>),(<*>),(<**>),pure,empty)
 import Control.Monad((<=<),(=<<),(>>=),(>>),(>>=),ap)
 
 -- Data structure of Arithmetic Expression
 
 data Expr = Atom Int
-          | Op Char Expr Expr deriving (Show,Read)
-
+          | Op Char Expr Expr deriving (Show,Read) 
 
 -- Parser combinators
 
@@ -76,7 +75,9 @@ infixNToRpn str = case parse pInfixExpr "infix arith" str of
 -- "10 - ( 4 + 3 ) * 2"
 
 rpnToInfixN :: String -> String
-rpnToInfixN str = showInfix . readRpn $ str
+rpnToInfixN str = case parse pRpnExpr "rpn arith" str of
+                    Right expr -> showInfix expr
+                    Left err -> error $ show err
 
 
 -- I don't like implementation of readRpn.
@@ -107,13 +108,12 @@ pRpnExpr =
        return $ calc n
 
 pRpnCalc :: Parser (Expr -> Expr)
-pRpnCalc = 
-    (do rhs <- pRpnExpr
-        op <- pRpnOp
-        calc <- pRpnCalc
-        return (calc . (`op` rhs))) <|>
-    (do eof
-        return id)
+pRpnCalc = try (
+    do rhs <- pRpnExpr
+       op <- pRpnOp
+       calc <- pRpnCalc
+       return (calc . (`op` rhs))
+    ) <|> return id
 
 pRpnOp :: Parser (Expr -> Expr -> Expr)
 pRpnOp = pMul <|> pAdd
