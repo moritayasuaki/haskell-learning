@@ -1,5 +1,11 @@
 module EnglishParsec where
 
+-- |
+-- 簡単な英語のパーサ(日本語翻訳機能付き)
+-- 参考文献: 「統語論」by 東京大学 矢田部修一さん
+-- <http://phiz.c.u-tokyo.ac.jp/~yatabe/6-syntax1.pdf>
+--
+
 import Data.Maybe
 import Data.List
 import Text.Parsec
