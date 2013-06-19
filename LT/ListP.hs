@@ -23,6 +23,7 @@ token = tokenize . string
 
 tokenize p = spaces *> p <* spaces
 
+spaces = many (char ' ' <|> char '\t' <|> char '\r' <|> char '\n')
 
 -- |
 -- 以下はParsecの自前実装
@@ -87,9 +88,5 @@ success = \src -> Right ([],src)
 
 choice :: [Parser a] -> Parser a
 choice ps = foldr1 (<|>) ps
-
-spaces :: Parser String
-spaces = many (char ' ' <|> char '\t' <|> char '\r' <|> char '\n')
-
 
 
