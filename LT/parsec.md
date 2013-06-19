@@ -212,10 +212,28 @@ parseTest (string "hello") "world" -- パース失敗
 
 一つ目のパーサが失敗時に二つ目のパーサを実行するパーサ
 
+これは以下のように使います。
+
+```haskell
+parseTest (string "hello" <|> string "world") "world" -- パース成功
+```
+
 `Text.Parsec`はちょっと癖があって、
 二つ目のパーサが実行されるのは
-一つ目のパーサが __入力を全く消費せずに__ 失敗した場合という点です。
-tryという関数も用意されているので併用してください。
+一つ目のパーサが __入力を全く消費せずに__ 失敗した場合だけになります。
+たとえば
+
+```haskell
+parseTest (string "hello" <|> string "heaven") "heaven" -- パース失敗
+```
+のような場合、前段のhelloパーサが`he`まで消費してしまい、
+heavenパーサが実行されません。
+
+こういう場合はtryという関数も用意されているので併用してください。
+
+```haskell
+parseTest (try (string "hello") <|> string "heaven") "heaven" -- パース成功
+```
 
 ### choice :: [Parser a] -> Parser a
 
