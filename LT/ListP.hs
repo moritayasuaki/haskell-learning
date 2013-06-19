@@ -1,7 +1,5 @@
 module ListTagParser where
 
-import Data.List
-
 data Contents = S String | T ListTag deriving Show
 data ListTag = UL [Contents] | OL [Contents] deriving Show
 
