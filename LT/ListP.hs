@@ -1,4 +1,4 @@
-module Plist where
+module ListTagParser where
 
 import Data.List
 
@@ -6,18 +6,28 @@ data Contents = S String | T ListTag deriving Show
 data ListTag = UL [Contents] | OL [Contents] deriving Show
 
 -- |
--- >>> listHeader "<ul><li>thanks</li></ul>" 
+-- 以下はリストパーサの自前実装
 
-listHeader = (string "<ul>" *> ((T . UL) <$> listBody) <* string "</ul>")
-          <|> (string "<ol>" *> ((T . OL) <$> listBody) <* string "</ol>")
+-- |
+-- >>> listHeader "<ul> <li> thanks </li> </ul>" 
 
-listBody = many (string "<li>" *> listContents <* string "</li>")
+listHeader = (token "<ul>" *> ((T . UL) <$> listBody) <* token "</ul>")
+          <|> (token "<ol>" *> ((T . OL) <$> listBody) <* token "</ol>")
+
+listBody = many (token "<li>" *> listContents <* token "</li>")
 
 listContents = (S <$> rawString) 
             <|> listHeader 
 
-rawString = many . choice $ map char (['a'..'z'] ++ ['A'..'Z'])
+rawString = tokenize $ many . choice $ map char (['a'..'z'] ++ ['A'..'Z'])
 
+token = tokenize . string
+
+tokenize p = spaces *> p <* spaces
+
+
+-- |
+-- 以下はParsecの自前実装
 
 type Source = String
 type ErrorMessage = String
@@ -26,6 +36,7 @@ type Parser output = Source -> Either ErrorMessage (output, Source)
 
 -- |
 -- >>> char 'p' "p"
+-- Right ('p',"")
 char :: Char -> Parser Char
 char ch src = case src of
                 []               -> Left "end of file!"
@@ -34,6 +45,7 @@ char ch src = case src of
 
 -- |
 -- >>> string "test" "testable"
+-- Right ("test","able")
 string :: String -> Parser String
 string (ch:str) = (:) <$> (char ch) <*> (string str)
 string _ = \s -> Right ([],s)
