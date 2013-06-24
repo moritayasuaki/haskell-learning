@@ -108,7 +108,11 @@ string _ = Parser $ \s -> Right ([],s)
 success :: Parser [a]
 success = return []
 
+
+-- |
+-- >>> runParser (string "test" <|> string "tenis") "tent"
+-- Left "t don't match i"
+
 choice :: [Parser a] -> Parser a
 choice ps = foldr1 (<|>) ps
-
 
