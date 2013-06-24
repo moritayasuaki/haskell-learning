@@ -1,4 +1,9 @@
+{-# LANGUAGE FlexibleInstances, TypeFamilies, TypeSynonymInstances #-}
+
 module ListTagParser where
+
+import Control.Monad
+import Control.Applicative
 
 data Contents = S String | T ListTag deriving Show
 data ListTag = UL [Contents] | OL [Contents] deriving Show
@@ -7,7 +12,9 @@ data ListTag = UL [Contents] | OL [Contents] deriving Show
 -- 以下はリストパーサの自前実装
 
 -- |
--- >>> listHeader "<ul> <li> thanks </li> </ul>" 
+-- >>> runParser listHeader "<ul> <li> thanks </li> </ul>"
+-- Right (T (UL [S "thanks"]),"")
+
 
 listHeader = (token "<ul>" *> ((T . UL) <$> listBody) <* token "</ul>")
           <|> (token "<ol>" *> ((T . OL) <$> listBody) <* token "</ol>")
@@ -31,60 +38,75 @@ spaces = many (char ' ' <|> char '\t' <|> char '\r' <|> char '\n')
 type Source = String
 type ErrorMessage = String
 
-type Parser output = Source -> Either ErrorMessage (output, Source)
+newtype Parser out = Parser { runParser :: Source -> Either ErrorMessage (out, Source) }
+
+-- 型が合ってれば合ってるでしょ的なあれ
+instance Monad Parser where
+    (Parser p) >>= m = Parser $
+        \src -> 
+            case p src of 
+                Left err -> Left err
+                Right (out, rest) -> runParser (m out) rest 
+    return = pure
+    fail err = Parser $ \src -> Left err -- これでいいのかな
+
+instance Applicative Parser where
+    pure out = Parser $ \src -> Right (out, src)
+    p1 <*> p2 = do p1out <- p1
+                   p2out <- p2
+                   return (p1out p2out)
+
+instance Functor Parser where
+    fmap f (Parser p) = Parser $ 
+        \src -> case p src of
+                    Left err -> Left err
+                    Right (out, rest) -> Right (f out, rest)
+
+instance Alternative Parser where
+    Parser(pa) <|> Parser(pa') = Parser $
+        \src -> 
+            case pa src of
+              Left e -> pa' src
+              Right _ -> pa src
+    empty = Parser $ \src -> Left ""
 
 -- |
--- >>> char 'p' "p"
+-- >>> runParser (char 'p') "p"
 -- Right ('p',"")
 char :: Char -> Parser Char
-char ch src = case src of
+char ch = Parser $ \src ->
+            case src of
                 []               -> Left "end of file!"
                 c:rest | c == ch -> Right (ch,rest)
                 c:_              -> Left $ [c] ++ " don't match " ++ [ch]
 
 -- |
--- >>> string "test" "testable"
+-- >>> runParser (string "test") "testable"
 -- Right ("test","able")
 string :: String -> Parser String
 string (ch:str) = (:) <$> (char ch) <*> (string str)
-string _ = \s -> Right ([],s)
+string _ = Parser $ \s -> Right ([],s)
 
-(<$>) :: (a -> b) -> Parser a -> Parser b
-f <$> pa = \src -> case pa src of
-              Left e -> Left e
-              Right (ans, s) -> Right (f ans, s)
 
-(<*>) :: Parser (a -> b) -> Parser a -> Parser b
-pab <*> pa = \src -> case pab src of
-    Left e -> Left e
-    Right (ans, s) -> case pa s of
-        Left e -> Left e
-        Right (ans2, s) -> Right (ans ans2, s)
+{- (*>) :: Parser a -> Parser b -> Parser b -}
+{- pa *> pb = \src -> case pa src of -}
+    {- Left e -> Left e -}
+    {- Right (ans, s) -> case pb s of -}
+        {- Left e -> Left e -}
+        {- Right (ans2, s) -> Right (ans2, s) -}
 
-(*>) :: Parser a -> Parser b -> Parser b
-pa *> pb = \src -> case pa src of
-    Left e -> Left e
-    Right (ans, s) -> case pb s of
-        Left e -> Left e
-        Right (ans2, s) -> Right (ans2, s)
+{- (<*) :: Parser a -> Parser b -> Parser a -}
+{- pa <* pb = \src -> case pa src of -}
+    {- Left e -> Left e -}
+    {- Right (ans, s) -> case pb s of -}
+        {- Left e -> Left e -}
+        {- Right (ans2, s) -> Right (ans, s) -}
 
-(<*) :: Parser a -> Parser b -> Parser a
-pa <* pb = \src -> case pa src of
-    Left e -> Left e
-    Right (ans, s) -> case pb s of
-        Left e -> Left e
-        Right (ans2, s) -> Right (ans, s)
-
-(<|>) :: Parser a -> Parser a -> Parser a
-pa <|> pa' = \src -> case pa src of
-    Left e -> pa' src
-    Right _ -> pa src
-
-many :: Parser a -> Parser [a]
-many p = (:) <$> p <*> many p <|> success
+{- many :: Parser a -> Parser [a] -}
+{- many p = (:) <$> p <*> many p <|> success -}
 
 success :: Parser [a]
-success = \src -> Right ([],src)
+success = return []
 
 choice :: [Parser a] -> Parser a
 choice ps = foldr1 (<|>) ps
