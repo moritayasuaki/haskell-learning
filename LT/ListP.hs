@@ -89,7 +89,7 @@ instance Alternative Parser where
 -- >>> runParser (char 'p') "p"
 -- Right ('p',"")
 char :: Char -> Parser Char
-ckar ch = Parser $ \src ->
+char ch = Parser $ \src ->
             case src of
                 []               -> Left "Unexpected end of file!"
                 c:rest | c == ch -> Right (ch,rest)
