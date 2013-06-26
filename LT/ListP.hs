@@ -1,22 +1,39 @@
 module ListTagParser where
 
 import Control.Applicative
+import Test.QuickCheck
+import Test.HUnit
+
+
+-- |
+-- 以下はパーサの使用例
+main :: IO ()
+main = do
+    -- 正常なリストタグのパース(Rightが返ってくる)
+    print $ runParser listHeader "<ol> <li> one </li> <li> two </li> <li> three </li> </ol>"
+    -- 閉じタグをミスっているリストタグのパース(Leftが返ってくる)
+    print $ runParser listHeader "<ol> <li> test <li> </ol>"
+
 
 data Contents = S String | T ListTag deriving Show
 data ListTag = UL [Contents] | OL [Contents] deriving Show
 
 
 -- |
--- 以下はリストパーサの自前実装
-
--- |
 -- >>> runParser listHeader "<ul> <li> thanks </li> </ul>"
 -- Right (T (UL [S "thanks"]),"")
 
+-- |
+-- 以下はリストパーサの実装
+
+-- |
+-- ulかolで囲まれた部分をパースするパーサ
 listHeader :: Parser Contents
 listHeader = (token "<ul>" *> ((T . UL) <$> listBody) <* token "</ul>")
           <|> (token "<ol>" *> ((T . OL) <$> listBody) <* token "</ol>")
 
+-- |
+-- liで囲まれた部分をパースするパーサ
 listBody :: Parser [Contents]
 listBody = many (token "<li>" *> listContents <* token "</li>")
 
@@ -24,15 +41,23 @@ listContents :: Parser Contents
 listContents = (S <$> rawString) 
             <|> listHeader 
 
+-- |
+-- 文字列をパースするパーサ
 rawString :: Parser String
 rawString = tokenize $ many . choice $ map char (['a'..'z'] ++ ['A'..'Z'])
 
+-- |
+-- スペース区切られた部分の文字列をパースするコンビネータ
 token :: String -> Parser String
 token = tokenize . string
 
+-- |
+-- スペース読み飛ばし用のコンビネータ
 tokenize :: Parser a -> Parser a
 tokenize p = spaces *> p <* spaces
 
+-- |
+-- スペースを読み込むパーサ
 spaces :: Parser String
 spaces = many (char ' ' <|> char '\t' <|> char '\r' <|> char '\n')
 
@@ -102,6 +127,30 @@ string :: String -> Parser String
 string (ch:str) = (:) <$> (char ch) <*> (string str)
 string _ = Parser $ \s -> Right ([],s)
 
+success :: Parser [a]
+success = return []
+
+
+-- |
+-- >>> runParser (string "test" <|> string "tenis") "tent"
+-- Left "A character t does't match i"
+
+choice :: [Parser a] -> Parser a
+choice ps = foldr1 (<|>) ps
+
+
+-- |
+-- 入力をキッチリ最後まで消費した場合に
+-- パース結果を表示する関数
+-- パース失敗で例外を返す
+parseTest :: Show a => Parser a -> String -> IO ()
+parseTest p s = case (runParser p $ s) of
+                  Right (result,"") -> print result 
+                  Right (_, rest) -> error (rest ++ " is unexpected!")
+                  Left err -> error err
+                  
+
+
 
 -- |
 -- Parserを色んなクラスのinstance化したので以下の関数は自前で定義しなくてもデフォルト実装が使える
@@ -122,15 +171,4 @@ string _ = Parser $ \s -> Right ([],s)
 
 {- many :: Parser a -> Parser [a] -}
 {- many p = (:) <$> p <*> many p <|> success -}
-
-success :: Parser [a]
-success = return []
-
-
--- |
--- >>> runParser (string "test" <|> string "tenis") "tent"
--- Left "A character t does't match i"
-
-choice :: [Parser a] -> Parser a
-choice ps = foldr1 (<|>) ps
 
