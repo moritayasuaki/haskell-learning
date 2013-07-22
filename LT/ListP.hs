@@ -1,9 +1,7 @@
 module ListTagParser where
 
+import Control.Monad
 import Control.Applicative
-import Test.QuickCheck
-import Test.HUnit
-
 
 -- |
 -- 以下はパーサの使用例
@@ -69,10 +67,9 @@ type ErrorMessage = String
 
 newtype Parser out = Parser { runParser :: Source -> Either ErrorMessage (out, Source) }
 
-
 -- 型が合ってれば合ってるでしょ的なアレ
 --
--- Monadなどのinstance化の中身の定義は
+-- Monadなどのinstance宣言の中身は
 -- 読んでもよく分からない事が多い。
 -- 書く方としては
 -- 1. 使える手段が限られている(コンストラクタとcase,λ,$とかidとか.、型制約=>があればその情報も使える)
@@ -83,27 +80,22 @@ newtype Parser out = Parser { runParser :: Source -> Either ErrorMessage (out, S
 
 instance Monad Parser where
     (Parser p) >>= m = Parser $
-        \src -> 
+        \src ->
             case p src of 
                 Left err -> Left err
                 Right (out, rest) -> runParser (m out) rest 
-    return = pure
+    return out = Parser $ \src -> Right (out, src)
     fail err = Parser $ \_ -> Left err -- これでいいのかな
 
 instance Applicative Parser where
-    pure out = Parser $ \src -> Right (out, src)
-    p1 <*> p2 = do p1out <- p1
-                   p2out <- p2
-                   return (p1out p2out)
+    pure = return
+    (<*>) = ap
 
 instance Functor Parser where
-    fmap f (Parser p) = Parser $ 
-        \src -> case p src of
-                    Left err -> Left err
-                    Right (out, rest) -> Right (f out, rest)
+    fmap = liftM 
 
 instance Alternative Parser where
-    Parser(pa) <|> Parser(pa') = Parser $
+    Parser pa <|> Parser pa' = Parser $
         \src -> 
             case pa src of
               Left _ -> pa' src
@@ -124,11 +116,11 @@ char ch = Parser $ \src ->
 -- >>> runParser (string "test") "testable"
 -- Right ("test","able")
 string :: String -> Parser String
-string (ch:str) = (:) <$> (char ch) <*> (string str)
+string (ch:str) = (:) <$> char ch <*> string str
 string _ = Parser $ \s -> Right ([],s)
 
-success :: Parser [a]
-success = return []
+success :: Parser ()
+success = return ()
 
 
 -- |
@@ -136,7 +128,7 @@ success = return []
 -- Left "A character t does't match i"
 
 choice :: [Parser a] -> Parser a
-choice ps = foldr1 (<|>) ps
+choice = foldr1 (<|>)
 
 
 -- |
@@ -144,7 +136,7 @@ choice ps = foldr1 (<|>) ps
 -- パース結果を表示する関数
 -- パース失敗で例外を返す
 parseTest :: Show a => Parser a -> String -> IO ()
-parseTest p s = case (runParser p $ s) of
+parseTest p s = case runParser p s of
                   Right (result,"") -> print result 
                   Right (_, rest) -> error (rest ++ " is unexpected!")
                   Left err -> error err
