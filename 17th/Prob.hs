@@ -48,6 +48,16 @@ flipThree = do
 
 shrink :: Eq a => Prob a -> Prob a
 shrink (Prob ps) =
-    Prob $ map (foldl1 (%+%)) (groupBy (%==%) ps)
+    Prob $ map (foldl1 (%+%)) (groupBy' (%==%) ps)
     where (a,pa) %==% (b,pb) = a == b
           (a,pa) %+% (b,pb) | (a == b) = (a,pa + pb)
+
+-- |
+-- >>> groupBy' [1,1,1,0,0,1,1,1]
+
+groupBy' :: (a -> a -> Bool) ->  [a] -> [[a]]
+groupBy' eq (x:xs) =
+    (x:together) : groupBy' eq other
+    where together = filter (eq x) xs
+          other = filter (not . eq x ) xs
+groupBy' _ _ = []
