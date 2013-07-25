@@ -6,6 +6,7 @@ import Control.Monad.Trans
 import Control.Monad.Trans.State
 import Control.Monad.Trans.Error
 import Control.Monad.Identity
+
 type Message = String
 type ParserT m = (StateT String) (ErrorT Message m) 
 type Parser = ParserT Identity
@@ -41,8 +42,15 @@ parseIO p s =
 (<?>) :: Parser a -> Message -> Parser a
 p <?> mes = p <|> lift (throwError mes)
 
--- |
--- >>> parseIO (char 'h') "hello"
 
 -- |
--- >>> parseIO (string "hello") "hello"
+-- >>> parseIO (char 'h') "hello"
+-- ('h',"ello")
+
+-- |
+-- >>> parseIO (string "hello" <|> string "world") "world"
+-- "world"
+
+-- |
+-- >>> parseIO (many $ string "hello") "hellohellohello"
+-- ["hello","hello","hello"]
