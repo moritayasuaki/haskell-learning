@@ -83,8 +83,13 @@ type Path = WriterT [Pos] (ListT Identity)
 type Parser = StateT String (ErrorT ErrorMessage Identity)
 ```
 
+## 便利な点
+
+- instance宣言無しに変換子の組み合わせで新しいモナドが作れる
+- 最低限必要な文脈で関数を実装し、後でより大きな文脈に組み込む事ができる
+
 ## 厄介な点
 
-- liftの多重呼び出しによるオーバーヘッド
 - 変換子の組み合わせる順序で意味が変わる
-- かなりややこしい
+- liftの多重呼び出しによるオーバーヘッド
+- なんだかんだでややこしい
