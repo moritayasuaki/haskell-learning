@@ -71,14 +71,14 @@ instance (Monad m) => Monad (MaybeT m) where
 
 ### チェス盤上のナイトの経路を列挙する
 
-```hasell 
+```haskell 
 -- WriterTとListTを組み合わせる
 type Path = WriterT [Pos] (ListT Identity)
 ```
 
 ### パーサを作る
 
-```hasell 
+```haskell 
 -- StateTとErrorTを組み合わせる
 type Parser = StateT String (ErrorT ErrorMessage Identity)
 ```
