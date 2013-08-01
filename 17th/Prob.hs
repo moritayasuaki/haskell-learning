@@ -53,7 +53,8 @@ shrink (Prob ps) =
           (a,pa) %+% (b,pb) | (a == b) = (a,pa + pb)
 
 -- |
--- >>> groupBy' [1,1,1,0,0,1,1,1]
+-- >>> groupBy' (==) [1,1,1,0,0,1,1,1]
+-- [[1,1,1,1,1,1],[0,0]]
 
 groupBy' :: (a -> a -> Bool) ->  [a] -> [[a]]
 groupBy' eq (x:xs) =
