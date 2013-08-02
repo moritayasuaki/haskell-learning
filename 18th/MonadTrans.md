@@ -1,13 +1,13 @@
 # Monad Transformer
-## Morita Yasuaki
-## Aug 1, 2013
+#### Morita Yasuaki
+#### Aug 1, 2013
 
 少し大きいプログラムになると、
 いろいろな文脈が必要になる。
 
 異なるモナドを組み合わせたり、行き来する統一的な方法は無いか？
 
-haskellでの解決策 => Monad Transformer
+haskellでの解決策 => Monad Transformer(モナド変換子)
 
 モナドを取ってモナドを返す型レベルの関数
 
@@ -42,7 +42,7 @@ class MonadTrans t where
   lift :: m a -> (t m) a
 ```
 
-## Maybeモナド変換子
+## 例:Maybeモナド変換子
 
 ```haskell
 newtype MaybeT m a = MaybeT { runMaybeT :: m (Maybe a) }
@@ -85,7 +85,7 @@ type Parser = StateT String (ErrorT ErrorMessage Identity)
 
 ## 便利な点
 
-- instance宣言無しに変換子の組み合わせで新しいモナドが作れる
+- instance宣言無しにモナド変換子の組み合わせで新しいモナドが作れる
 - 最低限必要な文脈で関数を実装し、後でより大きな文脈に組み込む事ができる
 
 ## 厄介な点

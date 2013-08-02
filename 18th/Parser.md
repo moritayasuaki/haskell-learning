@@ -1,6 +1,6 @@
-# 自作Parserをモナドにした
-## Morita Yasuaki
-## Aug 1, 2013
+# 自作ParserCombinatorをモナドにしてみる
+#### Morita Yasuaki
+#### Aug 1, 2013
 
 ## Parserの型シグネチャ
 
@@ -202,6 +202,7 @@ return x = Parser (\src -> Right (x,src))
 
 - QuickCheck
 - 手動展開
+- 面倒なので今回は省略
 
 ```haskell
 return x >>= f == f x
@@ -211,7 +212,7 @@ m >>= return == m
 
 ## ApplicativeとFunctorの宣言
 
-- Monadに出来ればあとは簡単
+- Monadに出来ればあとは機械的に
 
 ```haskell
 
