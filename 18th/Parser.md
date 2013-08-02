@@ -169,9 +169,9 @@ x :: a
 return x = ???
 ```
 
-- 当然Parserコンストラクタを使う
+- 結果の型がParser aなのでParserコンストラクタを使う
 
-```
+```haskell
 x :: a
 Parser :: (Source -> Either ErrorMessage (a, Source)) -> Parser a
 ??? :: Source -> Either ErrorMessage (a, Source)
@@ -181,7 +181,7 @@ return x = Parser ???
 
 - ???は関数の型なのでλ式使ってみる
 
-```
+```haskell
 x :: a
 src :: Source
 ??? :: Either ErrorMessage (a, Source)
@@ -189,10 +189,10 @@ src :: Source
 return x = Parser (\src -> ???)
 ```
 
-- returnはデフォルトの文脈なので素直に実装
-- 入力は何も消費せず固定の値xを返すパーサにする
+- returnはデフォルトの文脈なので余計な事をしない事が重要
+- 入力は消費せず固定の値xを返すパーサにする
 
-```
+```haskell
 x :: a
 src :: Source
 
@@ -212,7 +212,7 @@ m >>= return == m
 
 ## ApplicativeとFunctorの宣言
 
-- Monadに出来ればあとは機械的に
+- Monadに出来ればあとは機械的にできる
 
 ```haskell
 
